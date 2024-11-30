@@ -369,8 +369,8 @@ bool shuttingDown();
 void setShuttingDown();
 
 enum ETonemap : int {
-    SRGB = 0,
-    Gamma,
+    Gamma = 0,
+    SRGB,
     FalseColor,
     PositiveNegative,
 

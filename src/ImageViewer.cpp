@@ -97,19 +97,21 @@ ImageViewer::ImageViewer(
 
     mImageCanvas = new ImageCanvas{horizontalScreenSplit, pixel_ratio()};
 
-    // Tonemapping sectionim
+    // DisplayMapping(PostProcessing) sectionim
     {
         auto panel = new Widget{mSidebarLayout};
         panel->set_layout(new BoxLayout{Orientation::Horizontal, Alignment::Fill, 5});
-        new Label{panel, "Tonemapping", "sans-bold", 25};
+        new Label{panel, "DisplayMapping", "sans-bold", 25};
         panel->set_tooltip(
-            "Various tonemapping options. Hover the individual controls to learn more!"
+            "Various DisplayMapping options. Hover the individual controls to learn more!"
         );
 
-        // Exposure label and slider
+
+        // Exposure/Offset label and slider
         {
             panel = new Widget{mSidebarLayout};
-            panel->set_layout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 5});
+            panel->set_layout(new GridLayout{ Orientation::Vertical, 2, Alignment::Fill, 5, 0 });
+
 
             mExposureLabel = new Label{panel, "", "sans-bold", 15};
 
@@ -124,12 +126,7 @@ ImageViewer::ImageViewer(
                 "Exposure scales the brightness of an image prior to tonemapping by 2^Exposure.\n\n"
                 "Keyboard shortcuts:\nE and Shift+E"
             );
-        }
 
-        // Offset/Gamma label and slider
-        {
-            panel = new Widget{mSidebarLayout};
-            panel->set_layout(new GridLayout{Orientation::Vertical, 2, Alignment::Fill, 5, 0});
 
             mOffsetLabel = new Label{panel, "", "sans-bold", 15};
 
@@ -140,23 +137,17 @@ ImageViewer::ImageViewer(
             });
             setOffset(0);
 
-            mGammaLabel = new Label{panel, "", "sans-bold", 15};
-
-            mGammaSlider = new Slider{panel};
-            mGammaSlider->set_range({0.01f, 5.0f});
-            mGammaSlider->set_callback([this](float value) {
-                setGamma(value);
-            });
-            setGamma(2.2f);
-
             panel->set_tooltip(
                 "The offset is added to the image after exposure has been applied.\n"
                 "Keyboard shortcuts: O and Shift+O\n\n"
-                "Gamma is the exponent used when gamma-tonemapping.\n"
-                "Keyboard shortcuts: G and Shift+G\n\n"
             );
         }
     }
+
+    // TODO: Tonemapping
+
+    // DOF(need a depth image)
+    // Bloom
 
     // Exposure/offset buttons
     {
@@ -176,6 +167,8 @@ ImageViewer::ImageViewer(
         mCurrentImageButtons.push_back(
             makeButton("Normalize", [this]() { normalizeExposureAndOffset(); }, 0, "Shortcut: N")
         );
+
+        // TODO: Split
         makeButton("Reset", [this]() { resetImage(); }, 0, "Shortcut: R");
 
         if (mSupportsHdr) {
@@ -232,7 +225,8 @@ ImageViewer::ImageViewer(
         }
     }
 
-    // Tonemap options
+
+    // Display options
     {
         mTonemapButtonContainer = new Widget{mSidebarLayout};
         mTonemapButtonContainer->set_layout(new GridLayout{Orientation::Horizontal, 4, Alignment::Fill, 5, 2});
@@ -245,21 +239,21 @@ ImageViewer::ImageViewer(
             return button;
         };
 
-        makeTonemapButton("sRGB",  [this]() { setTonemap(ETonemap::SRGB); });
         makeTonemapButton("Gamma", [this]() { setTonemap(ETonemap::Gamma); });
+        makeTonemapButton("sRGB",  [this]() { setTonemap(ETonemap::SRGB); });
         makeTonemapButton("FC",    [this]() { setTonemap(ETonemap::FalseColor); });
         makeTonemapButton("+/-",   [this]() { setTonemap(ETonemap::PositiveNegative); });
 
-        setTonemap(ETonemap::SRGB);
+        //setTonemap(ETonemap::Gamma);
 
         mTonemapButtonContainer->set_tooltip(
-            "Tonemap operator selection:\n\n"
-
-            "sRGB\n"
-            "Linear to sRGB conversion\n\n"
+            "Display operator selection:\n\n"
 
             "Gamma\n"
             "Inverse power gamma correction\n\n"
+
+            "sRGB\n"
+            "Linear to sRGB conversion\n\n"
 
             "FC\n"
             "False-color visualization\n\n"
@@ -268,6 +262,29 @@ ImageViewer::ImageViewer(
             "Positive=Green, Negative=Red"
         );
     }
+
+    // Gamma label and slider
+    {
+        auto panel = new Widget{ mSidebarLayout };
+        panel->set_layout(new BoxLayout{ Orientation::Vertical, Alignment::Fill, 5 });
+
+        mGammaLabel = new Label{ panel, "", "sans-bold", 15 };
+
+        mGammaSlider = new Slider{ panel };
+        mGammaSlider->set_range({ 0.01f, 5.0f });
+        mGammaSlider->set_callback([this](float value) {
+            setGamma(value);
+            });
+
+        setGamma(2.2f);
+        setTonemap(ETonemap::Gamma);
+
+        panel->set_tooltip(
+            "Gamma is the exponent used when gamma-tonemapping.\n"
+            "Keyboard shortcuts: G and Shift+G\n\n"
+        );
+    }
+
 
     // Error metrics
     {
