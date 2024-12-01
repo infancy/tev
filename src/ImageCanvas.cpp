@@ -155,13 +155,21 @@ void ImageCanvas::drawPixelValuesAsText(NVGcontext* ctx) {
         bool shiftAndControlHeld =
             (glfwGetKey(glfwWindow, GLFW_KEY_LEFT_SHIFT) || glfwGetKey(glfwWindow, GLFW_KEY_RIGHT_SHIFT)) &&
             (glfwGetKey(glfwWindow, GLFW_KEY_LEFT_CONTROL) || glfwGetKey(glfwWindow, GLFW_KEY_RIGHT_CONTROL));
+        bool AltHeld =
+            (glfwGetKey(glfwWindow, GLFW_KEY_LEFT_ALT) || glfwGetKey(glfwWindow, GLFW_KEY_RIGHT_ALT));
 
         Vector2i cur;
         vector<float> values;
         for (cur.y() = startIndices.y(); cur.y() < endIndices.y(); ++cur.y()) {
             for (cur.x() = startIndices.x(); cur.x() < endIndices.x(); ++cur.x()) {
                 Vector2i nano = Vector2i{texToNano * (Vector2f{cur} + Vector2f{0.5f})};
-                getValuesAtNanoPos(nano, values, channels);
+
+                if (AltHeld) {
+                    getValuesAtNanoPos(nano, values, channels, true); // memory value
+                }
+                else {
+                    getValuesAtNanoPos(nano, values, channels, false); // file origin value
+                }
 
                 TEV_ASSERT(values.size() >= colors.size(), "Can not have more values than channels.");
 
@@ -170,13 +178,13 @@ void ImageCanvas::drawPixelValuesAsText(NVGcontext* ctx) {
                     Vector2f pos;
 
                     if (shiftAndControlHeld) {
-                        float tonemappedValue = Channel::tail(channels[i]) == "A" ? values[i] : toSRGB(values[i]);
-                        unsigned char discretizedValue = (char)(tonemappedValue * 255 + 0.5f);
-                        str = fmt::format("{:02X}", discretizedValue);
+                        //float tonemappedValue = Channel::tail(channels[i]) == "A" ? values[i] : toSRGB(values[i]);
+                        unsigned char discretizedValue = (char)(values[i] * 255 + 0.5f);
+                        str = fmt::format("{}", discretizedValue);
 
                         pos = Vector2f{
-                            m_pos.x() + nano.x() + (i - 0.5f * (colors.size() - 1)) * fontSize * 0.88f,
-                            (float)m_pos.y() + nano.y(),
+                            (float)m_pos.x() + nano.x(),
+                            m_pos.y() + nano.y() + (i - 0.5f * (colors.size() - 1)) * fontSize,
                         };
                     } else {
                         str = std::abs(values[i]) > 100000 ? fmt::format("{:6g}", values[i]) : fmt::format("{:.5f}", values[i]);
