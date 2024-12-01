@@ -233,7 +233,7 @@ ETonemap toTonemap(string name) {
     } else if (name == "POSITIVENEGATIVE" || name == "POSNEG" || name == "PN" ||name == "+-") {
         return PositiveNegative;
     } else {
-        return SRGB;
+        return Gamma;
     }
 }
 

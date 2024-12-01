@@ -47,8 +47,8 @@ UberShader::UberShader(RenderPass* renderPass) {
 
         auto fragmentShader = preamble +
             R"glsl(
-            #define SRGB        0
-            #define GAMMA       1
+            #define GAMMA       0
+            #define SRGB        1
             #define FALSE_COLOR 2
             #define POS_NEG     3
 
@@ -425,7 +425,7 @@ void UberShader::draw(const Vector2f& pixelSize, const Vector2f& checkerSize) {
         pixelSize, checkerSize,
         nullptr, Matrix3f{0.0f},
         0.0f, 0.0f, 0.0f, false,
-        ETonemap::SRGB,
+        ETonemap::Gamma,
         std::nullopt
     );
 }

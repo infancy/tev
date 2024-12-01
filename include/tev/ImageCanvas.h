@@ -146,7 +146,7 @@ private:
 
     std::unique_ptr<UberShader> mShader;
 
-    ETonemap mTonemap = SRGB;
+    ETonemap mTonemap = ETonemap::Gamma;
     EMetric mMetric = Error;
     std::optional<Box2i> mCrop;
 
