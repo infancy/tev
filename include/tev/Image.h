@@ -70,14 +70,16 @@ struct ImageData {
         return channel(channelName) != nullptr;
     }
 
-    const Channel* channel(const std::string& channelName) const {
+    const Channel* channel(const std::string& channelName, bool bMemoryValue = true) const {
+        const std::vector<Channel>& crtChannels = bMemoryValue ? channels : fileChannels;
+
         auto it = std::find_if(
-            std::begin(channels),
-            std::end(channels),
+            std::begin(crtChannels),
+            std::end(crtChannels),
             [&channelName](const Channel& c) { return c.name() == channelName; }
         );
 
-        if (it != std::end(channels)) {
+        if (it != std::end(crtChannels)) {
             return &(*it);
         } else {
             return nullptr;
@@ -111,7 +113,7 @@ struct ImageData {
                     if (inputEncoding == EInputEncoding::Linear) {
                         channels[c].at(i) = fileChannels[c].at(i);
                     }
-                    else if (inputEncoding == EInputEncoding::Linear) {
+                    else if (inputEncoding == EInputEncoding::sRGB) {
                         channels[c].at(i) = toLinear(fileChannels[c].at(i));
                     }
                     else if (inputEncoding == EInputEncoding::Gamma) {
@@ -171,14 +173,15 @@ public:
 
     void SetInputEncoding(EInputEncoding inputEncoding) {
         mData.SetInputEncoding(inputEncoding);
+        mTextures.clear();
     }
 
     bool hasChannel(const std::string& channelName) const {
         return mData.hasChannel(channelName);
     }
 
-    const Channel* channel(const std::string& channelName) const {
-        return mData.channel(channelName);
+    const Channel* channel(const std::string& channelName, bool bMemoryValue = true) const {
+        return mData.channel(channelName, bMemoryValue);
     }
 
     nanogui::Texture* texture(const std::string& channelGroupName);

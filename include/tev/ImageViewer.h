@@ -204,6 +204,7 @@ private:
     nanogui::Widget* mFooter;
     bool mShouldFooterBeVisible = false;
 
+    nanogui::Label* mCurrentImageLabel;
     nanogui::ComboBox* mInputEncodingButton;
 
     nanogui::Label* mExposureLabel;

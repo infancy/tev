@@ -501,7 +501,7 @@ Vector2i ImageCanvas::getDisplayWindowCoords(const Image* image, Vector2i nanoPo
     return imageCoords;
 }
 
-void ImageCanvas::getValuesAtNanoPos(Vector2i nanoPos, vector<float>& result, const vector<string>& channels) {
+void ImageCanvas::getValuesAtNanoPos(Vector2i nanoPos, vector<float>& result, const vector<string>& channels, bool bMemoryValue) {
     result.clear();
     if (!mImage) {
         return;
@@ -509,7 +509,7 @@ void ImageCanvas::getValuesAtNanoPos(Vector2i nanoPos, vector<float>& result, co
 
     auto imageCoords = getImageCoords(mImage.get(), nanoPos);
     for (const auto& channel : channels) {
-        const Channel* c = mImage->channel(channel);
+        const Channel* c = mImage->channel(channel, bMemoryValue);
         TEV_ASSERT(c, "Requested channel must exist.");
         result.push_back(c->eval(imageCoords));
     }

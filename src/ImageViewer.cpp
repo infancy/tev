@@ -110,9 +110,17 @@ ImageViewer::ImageViewer(
     }
 
     {
+        auto panel = new Widget{ mSidebarLayout };
+        panel->set_layout(new BoxLayout{ Orientation::Horizontal, Alignment::Maximum, 0 });
+
+        // TODO
+        mCurrentImageLabel = new Label{ panel, "                                          ", "sans-bold", 20 };
+    }
+
+    {
         GridLayout* layout = new GridLayout(Orientation::Horizontal, 2, Alignment::Fill, 5, 2);
         layout->set_col_alignment( { Alignment::Minimum, Alignment::Fill });
-        layout->set_spacing(0, 10);
+        //layout->set_spacing(0, 10);
 
         auto panel = new Widget{ mSidebarLayout };
         panel->set_layout(layout);
@@ -122,7 +130,6 @@ ImageViewer::ImageViewer(
         mInputEncodingButton->set_callback([this](int selected_index) {
             if (mCurrentImage) {
                 mCurrentImage->SetInputEncoding(static_cast<EInputEncoding>(selected_index));
-                // TODO: update view
             }
         });
 
@@ -2132,38 +2139,50 @@ void ImageViewer::updateTitle() {
         auto channelTails = channels;
         transform(begin(channelTails), end(channelTails), begin(channelTails), Channel::tail);
 
-        caption = fmt::format(
-            "{} – {} – {}%",
-            mCurrentImage->shortName(),
-            mCurrentGroup,
-            (int)std::round(mImageCanvas->scale() * 100)
-        );
 
         auto rel = mouse_pos() - mImageCanvas->position();
-        vector<float> values = mImageCanvas->getValuesAtNanoPos({rel.x(), rel.y()}, channels);
         nanogui::Vector2i imageCoords = mImageCanvas->getImageCoords(mCurrentImage.get(), {rel.x(), rel.y()});
+
+        vector<float> fileValues = mImageCanvas->getValuesAtNanoPos({rel.x(), rel.y()}, channels, false);
+        vector<float> values = mImageCanvas->getValuesAtNanoPos({rel.x(), rel.y()}, channels, true);
         TEV_ASSERT(values.size() >= channelTails.size(), "Should obtain a value for every existing channel.");
 
         string valuesString;
-        for (size_t i = 0; i < channelTails.size(); ++i) {
-            valuesString += fmt::format("{:.2f},", values[i]);
-        }
-        valuesString.pop_back();
-        valuesString += " / 0x";
-        for (size_t i = 0; i < channelTails.size(); ++i) {
-            float tonemappedValue = channelTails[i] == "A" ? values[i] : toSRGB(values[i]);
-            unsigned char discretizedValue = (char)(tonemappedValue * 255 + 0.5f);
-            valuesString += fmt::format("{:02X}", discretizedValue);
-        }
+        auto SetValuesString = [&](const vector<float>& values) {
+            for (size_t i = 0; i < channelTails.size(); ++i) {
+                valuesString += fmt::format("{:.2f},", values[i]);
+            }
+            valuesString.pop_back();
+
+            valuesString += " / ";
+            for (size_t i = 0; i < channelTails.size(); ++i) {
+                unsigned char discretizedValue = (char)(values[i] * 255 + 0.5f);
+                valuesString += fmt::format("{} ", discretizedValue);
+            }
+
+            //valuesString += " / 0x";
+            //for (size_t i = 0; i < channelTails.size(); ++i) {
+            //    unsigned char discretizedValue = (char)(values[i] * 255 + 0.5f);
+            //    valuesString += fmt::format("{:02X}", discretizedValue);
+            //}
+        };
+        valuesString += fmt::format("File: ");
+        SetValuesString(fileValues);
+        valuesString += fmt::format(" => Memory: ");
+        SetValuesString(values);
+
 
         caption += fmt::format(
-            " – @{},{} / {}x{}: {}",
+            " {}% @{},{} / {}x{}  {}   {}",
+            (int)std::round(mImageCanvas->scale() * 100),
             imageCoords.x(),
             imageCoords.y(),
             mCurrentImage->size().x(),
             mCurrentImage->size().y(),
+            mCurrentGroup,
             valuesString
         );
+        mCurrentImageLabel->set_caption(" " + mCurrentImage->shortName());
     }
 
     set_caption(caption);
