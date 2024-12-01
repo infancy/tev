@@ -6,6 +6,7 @@
 #include <clip.h>
 
 #include <nanogui/button.h>
+#include <nanogui/combobox.h>
 #include <nanogui/colorwheel.h>
 #include <nanogui/icons.h>
 #include <nanogui/label.h>
@@ -97,6 +98,38 @@ ImageViewer::ImageViewer(
 
     mImageCanvas = new ImageCanvas{horizontalScreenSplit, pixel_ratio()};
 
+#pragma region InputEncoding
+    {
+        auto panel = new Widget{ mSidebarLayout };
+        panel->set_layout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill, 5 });
+
+        new Label{ panel, "InputEncoding", "sans-bold", 25 };
+        panel->set_tooltip(
+            "File Info; Encoding/Decoding Options"
+        );
+    }
+
+    {
+        GridLayout* layout = new GridLayout(Orientation::Horizontal, 2, Alignment::Fill, 5, 2);
+        layout->set_col_alignment( { Alignment::Minimum, Alignment::Fill });
+        layout->set_spacing(0, 10);
+
+        auto panel = new Widget{ mSidebarLayout };
+        panel->set_layout(layout);
+
+        new Label{ panel, "EncodingOption:", "sans-bold", 15 };
+        new ComboBox(panel, { "Linear", "sRGB", "Gamma" });
+        panel->set_tooltip(
+            "Linear Encoding, mainly for hdr/exr\n"
+            "sRGB Encoding, mainly for png/jpg\n"
+            "Gamma1/2.2 Encoding"
+        );
+    }
+#pragma endregion
+
+
+#pragma region DisplayMapping
+
     // DisplayMapping(PostProcessing) sectionim
     {
         auto panel = new Widget{mSidebarLayout};
@@ -105,44 +138,44 @@ ImageViewer::ImageViewer(
         panel->set_tooltip(
             "Various DisplayMapping options. Hover the individual controls to learn more!"
         );
-
-
-        // Exposure/Offset label and slider
-        {
-            panel = new Widget{mSidebarLayout};
-            panel->set_layout(new GridLayout{ Orientation::Vertical, 2, Alignment::Fill, 5, 0 });
-
-
-            mExposureLabel = new Label{panel, "", "sans-bold", 15};
-
-            mExposureSlider = new Slider{panel};
-            mExposureSlider->set_range({-5.0f, 5.0f});
-            mExposureSlider->set_callback([this](float value) {
-                setExposure(value);
-            });
-            setExposure(0);
-
-            panel->set_tooltip(
-                "Exposure scales the brightness of an image prior to tonemapping by 2^Exposure.\n\n"
-                "Keyboard shortcuts:\nE and Shift+E"
-            );
-
-
-            mOffsetLabel = new Label{panel, "", "sans-bold", 15};
-
-            mOffsetSlider = new Slider{panel};
-            mOffsetSlider->set_range({-1.0f, 1.0f});
-            mOffsetSlider->set_callback([this](float value) {
-                setOffset(value);
-            });
-            setOffset(0);
-
-            panel->set_tooltip(
-                "The offset is added to the image after exposure has been applied.\n"
-                "Keyboard shortcuts: O and Shift+O\n\n"
-            );
-        }
     }
+
+    // Exposure/Offset label and slider
+    {
+        auto panel = new Widget{ mSidebarLayout };
+        panel->set_layout(new GridLayout{ Orientation::Vertical, 2, Alignment::Fill, 5, 0 });
+
+
+        mExposureLabel = new Label{ panel, "", "sans-bold", 15 };
+
+        mExposureSlider = new Slider{ panel };
+        mExposureSlider->set_range({ -5.0f, 5.0f });
+        mExposureSlider->set_callback([this](float value) {
+            setExposure(value);
+            });
+        setExposure(0);
+
+        panel->set_tooltip(
+            "Exposure scales the brightness of an image prior to tonemapping by 2^Exposure.\n\n"
+            "Keyboard shortcuts:\nE and Shift+E"
+        );
+
+
+        mOffsetLabel = new Label{ panel, "", "sans-bold", 15 };
+
+        mOffsetSlider = new Slider{ panel };
+        mOffsetSlider->set_range({ -1.0f, 1.0f });
+        mOffsetSlider->set_callback([this](float value) {
+            setOffset(value);
+            });
+        setOffset(0);
+
+        panel->set_tooltip(
+            "The offset is added to the image after exposure has been applied.\n"
+            "Keyboard shortcuts: O and Shift+O\n\n"
+        );
+    }
+
 
     // TODO: Tonemapping
 
@@ -327,6 +360,8 @@ ImageViewer::ImageViewer(
             "(i - r)² / (r² + 0.01)"
         );
     }
+
+#pragma endregion
 
     // Image selection
     {
