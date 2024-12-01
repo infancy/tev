@@ -61,23 +61,34 @@ Task<vector<ImageData>> StbiImageLoader::load(istream& iStream, const fs::path&,
 
     ScopeGuard dataGuard{[data] { stbi_image_free(data); }};
 
+    resultData.fileChannels = makeNChannels(numChannels, size);
     resultData.channels = makeNChannels(numChannels, size);
-    int alphaChannelIndex = 3;
+
+    int alphaChannelIndex = 3; // RGBA
 
     auto numPixels = (size_t)size.x() * size.y();
     if (isHdr) {
+        resultData.inputEncoding = EInputEncoding::Linear;
+
         co_await ThreadPool::global().parallelForAsync<size_t>(0, numPixels, [&](size_t i) {
             auto typedData = reinterpret_cast<float*>(data);
             size_t baseIdx = i * numChannels;
+
             for (int c = 0; c < numChannels; ++c) {
+                resultData.fileChannels[c].at(i) = typedData[baseIdx + c]; // linear
                 resultData.channels[c].at(i) = typedData[baseIdx + c];
             }
         }, priority);
     } else {
+        resultData.inputEncoding = EInputEncoding::sRGB;
+
         co_await ThreadPool::global().parallelForAsync<size_t>(0, numPixels, [&](size_t i) {
             auto typedData = reinterpret_cast<unsigned char*>(data);
             size_t baseIdx = i * numChannels;
+
             for (int c = 0; c < numChannels; ++c) {
+                resultData.fileChannels[c].at(i) = (typedData[baseIdx + c]) / 255.0f; // linear
+
                 if (c == alphaChannelIndex) {
                     resultData.channels[c].at(i) = (typedData[baseIdx + c]) / 255.0f;
                 } else {

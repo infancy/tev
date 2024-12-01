@@ -204,6 +204,8 @@ private:
     nanogui::Widget* mFooter;
     bool mShouldFooterBeVisible = false;
 
+    nanogui::ComboBox* mInputEncodingButton;
+
     nanogui::Label* mExposureLabel;
     nanogui::Slider* mExposureSlider;
 

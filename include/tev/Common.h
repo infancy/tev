@@ -368,6 +368,15 @@ void toggleConsole();
 bool shuttingDown();
 void setShuttingDown();
 
+
+enum class EInputEncoding
+{
+    Linear,
+    sRGB,
+    Gamma, // GammaValue = 1/2.2
+};
+
+// TODO: reanme
 enum ETonemap : int {
     Gamma = 0,
     SRGB,

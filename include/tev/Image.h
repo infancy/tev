@@ -13,6 +13,7 @@
 
 #include <atomic>
 #include <istream>
+#include <limits>
 #include <map>
 #include <memory>
 #include <optional>
@@ -28,7 +29,11 @@ struct ImageData {
     ImageData(const ImageData&) = delete;
     ImageData(ImageData&&) = default;
 
-    std::vector<Channel> channels;
+    EInputEncoding inputEncoding{};
+
+    std::vector<Channel> fileChannels; // file origin data
+    std::vector<Channel> channels; // memory
+
     std::vector<std::string> layers;
     nanogui::Matrix4f toRec709 = nanogui::Matrix4f{1.0f}; // Identity by default
     bool hasPremultipliedAlpha;
@@ -92,6 +97,30 @@ struct ImageData {
             return nullptr;
         }
     }
+
+    void SetInputEncoding(EInputEncoding value) {
+        if (inputEncoding != value) {
+            inputEncoding = value;
+
+            int numChannels = channels.size();
+            int alphaChannelIndex = 3;
+            auto numPixels = (size_t)channels[0].numPixels();
+
+            ThreadPool::global().parallelFor<size_t>(0, numPixels, [&](size_t i) {
+                for (int c = 0; c < alphaChannelIndex; ++c) {
+                    if (inputEncoding == EInputEncoding::Linear) {
+                        channels[c].at(i) = fileChannels[c].at(i);
+                    }
+                    else if (inputEncoding == EInputEncoding::Linear) {
+                        channels[c].at(i) = toLinear(fileChannels[c].at(i));
+                    }
+                    else if (inputEncoding == EInputEncoding::Gamma) {
+                        channels[c].at(i) = std::pow(fileChannels[c].at(i), 2.2);
+                    }
+                }
+            }, std::numeric_limits<int>::max());
+        }
+    }
 };
 
 struct ChannelGroup {
@@ -135,6 +164,14 @@ public:
     }
 
     std::string shortName() const;
+
+    EInputEncoding GetInputEncoding() const {
+        return mData.inputEncoding;
+    }
+
+    void SetInputEncoding(EInputEncoding inputEncoding) {
+        mData.SetInputEncoding(inputEncoding);
+    }
 
     bool hasChannel(const std::string& channelName) const {
         return mData.hasChannel(channelName);

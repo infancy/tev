@@ -118,7 +118,14 @@ ImageViewer::ImageViewer(
         panel->set_layout(layout);
 
         new Label{ panel, "EncodingOption:", "sans-bold", 15 };
-        new ComboBox(panel, { "Linear", "sRGB", "Gamma" });
+        mInputEncodingButton = new ComboBox(panel, { "Linear", "sRGB", "Gamma" });
+        mInputEncodingButton->set_callback([this](int selected_index) {
+            if (mCurrentImage) {
+                mCurrentImage->SetInputEncoding(static_cast<EInputEncoding>(selected_index));
+                // TODO: update view
+            }
+        });
+
         panel->set_tooltip(
             "Linear Encoding, mainly for hdr/exr\n"
             "sRGB Encoding, mainly for png/jpg\n"
@@ -134,6 +141,7 @@ ImageViewer::ImageViewer(
     {
         auto panel = new Widget{mSidebarLayout};
         panel->set_layout(new BoxLayout{Orientation::Horizontal, Alignment::Fill, 5});
+
         new Label{panel, "DisplayMapping", "sans-bold", 25};
         panel->set_tooltip(
             "Various DisplayMapping options. Hover the individual controls to learn more!"
@@ -1544,6 +1552,7 @@ void ImageViewer::selectImage(const shared_ptr<Image>& image, bool stopPlayback)
     }
 
     mCurrentImage = image;
+    mInputEncodingButton->set_selected_index(static_cast<int>(mCurrentImage->GetInputEncoding()));
     mImageCanvas->setImage(mCurrentImage);
 
     // Clear group buttons
